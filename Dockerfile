@@ -1,4 +1,4 @@
-FROM node:18.13.0-alpine
+FROM node:22.10.0-alpine
 
 WORKDIR /app
 
@@ -14,6 +14,6 @@ COPY . .
 
 RUN npm run build
 
-EXPOSE 3002
+RUN npx prisma generate
 
-CMD ["/bin/sh", "-c", "/wait && npm run start:prod"]
+CMD ["/bin/sh", "-c", "/wait && npx prisma migrate deploy && npx prisma db seed && npm run start:prod"]
