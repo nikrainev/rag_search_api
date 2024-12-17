@@ -1,0 +1,37 @@
+version: "3.6"
+
+services:
+  rag-admin-postgres:
+    image: postgres:17.2
+    restart: always
+    environment:
+      - POSTGRES_USER={}
+      - POSTGRES_PASSWORD={}
+      - POSTGRES_DB={}
+    volumes:
+      - "home/hse_rag_api/data:/var/lib/postgresql/data"
+    ports:
+      - "15532:5432"
+
+  core:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - rag-admin-postgres
+    links:
+      - rag-admin-postgres
+    environment:
+      - DATABASE_URL={}
+      - PORT=3001,
+      - APP_ENV=production
+      - JWT_SALT={}
+      - S3_ACCESS_KEY_ID={}
+      - S3_SECRET_ACCESS_KEY={}
+      - S3_RECORDINGS_BUCKET_NAME={}
+      - S3_REGION={}
+      - S3_ENDPOINT={}
+      - TG_BOT_TOKEN={}
+    ports:
+      - "3021:3001"
