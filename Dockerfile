@@ -1,19 +1,27 @@
-FROM node:22.10.0-alpine
+FROM --platform=linux/amd64 node:22.10.0-alpine as builder
 
+# Create app directory
 WORKDIR /app
 
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.9.0/wait /wait
+# A wildcard is used to ensure both package.json AND package-lock.json are copied
+COPY package*.json ./
+COPY prisma ./prisma/
 
-RUN chmod +x /wait
-
-COPY ./package*.json ./
-
-RUN npm ci --silent --also=dev
+# Install app dependencies
+RUN npm install
 
 COPY . .
 
 RUN npm run build
 
-RUN npx prisma generate
+FROM node:22.10.0-alpine
 
-CMD ["/bin/sh", "-c", "/wait && npx prisma migrate deploy && npx prisma db seed && npm run start:prod"]
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
+
+RUN npx prisma generate
+RUN npx prisma migrate deploy
+
+CMD [ "npm", "run", "start:prod" ]

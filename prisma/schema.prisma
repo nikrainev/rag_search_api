@@ -29,7 +29,7 @@ model Request {
 
 model User {
   id            Int       @id @default(autoincrement())
-  chat_id       Int       @unique
+  chat_id       BigInt       @unique
   username      String
   is_premium_tg Boolean
   is_banned     Boolean

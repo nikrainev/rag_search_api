@@ -1,6 +1,6 @@
 import {IsInt, IsOptional, IsString, Min} from 'class-validator';
 import { Type } from 'class-transformer';
-import { File } from "@prisma/client";
+import { File as PrismaFile } from "@prisma/client";
 
 export class CreateFileBody {
     @IsString()
@@ -14,6 +14,9 @@ export class CreateFileBody {
     @IsString()
     @IsOptional()
     content?: string;
+
+    @IsString()
+    fileId: string
 }
 
 export class CreateFileParams {
@@ -29,5 +32,5 @@ export interface ICreateFile {
 }
 
 export interface ICreateFileRes {
-    file: File
+    file: PrismaFile
 }

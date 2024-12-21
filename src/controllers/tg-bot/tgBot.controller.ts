@@ -4,7 +4,7 @@ import {
     forwardRef,
     Inject,
     Get,
-    UseInterceptors, UseGuards, Put, Post, Req, Param, Body
+    UseInterceptors, UseGuards, Put, Post, Req, Param, Body, UploadedFile
 } from '@nestjs/common';
 
 import { TgBotService } from './tgBot.service';
@@ -18,6 +18,8 @@ import {Roles} from "../../decorators/role.decorator";
 import {JwtAuthGuard} from "../../middlewares/guards/jwt-auth.guard";
 import {UserRoles} from "../../common/const/user/USER_ROLES";
 import {IRequest} from "../../common/types/fastify.types";
+import {SaveFileDataParams} from "./requests/saveFileData.request";
+import {FileInterceptor} from "@nestjs/platform-express";
 
 
 @Controller('tg-bot')

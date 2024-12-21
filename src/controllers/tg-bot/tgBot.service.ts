@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import {forwardRef, Inject, Injectable, UploadedFile} from '@nestjs/common';
 import { ICreateFileRes, ICreateFile } from './requests/createFile.request';
 import {ICreateUserResponse, CreateUserBody} from './requests/createUser.request';
 import { ICreateUserReqRes, ICreateUserReqReq } from './requests/createUserReq.request';
@@ -8,6 +8,9 @@ import {CheckRateLimitParams,  ICheckRateLimitRes} from "./requests/checkRateLim
 import {JwtService} from "@nestjs/jwt";
 import {PrismaService} from "../../providers/Prisma";
 import {subHours} from "date-fns";
+import {TelegramAPI} from "../../providers/Telegram";
+import {PutObjectCommand } from "@aws-sdk/client-s3";
+import {randomStringGenerator} from "@nestjs/common/utils/random-string-generator.util";
 
 @Injectable()
 export class TgBotService {
@@ -15,7 +18,9 @@ export class TgBotService {
         @Inject(forwardRef(() => S3))
         private readonly s3: S3,
         private readonly jwtService: JwtService,
-        private prisma: PrismaService
+        private prisma: PrismaService,
+        @Inject(forwardRef(() => TelegramAPI))
+        private readonly telegramApi: TelegramAPI,
     ) {}
 
     async createFile(req:ICreateFile):Promise<ICreateFileRes> {
@@ -25,12 +30,35 @@ export class TgBotService {
             }
         });
 
+        const fileInfo = await this.telegramApi.client.getFile(req.body.fileId)
+        const stream = await this.telegramApi.client.getFileStream(req.body.fileId)
+
+        const arr:Buffer[] =  []
+
+        await new Promise(async (resolve) => {
+            stream.on('data', chunk => {
+                arr.push(chunk)
+            });
+
+            stream.on(('end'), () => {
+                resolve({})
+            })
+        })
+
+        const fileKey = randomStringGenerator() + '/' + fileInfo.file_path?.replace('documents/', '');
+        await this.s3.client.send(new PutObjectCommand({
+            Bucket: 'rag-search',
+            Key: fileKey,
+            Body: Buffer.concat(arr),
+        }))
+
         const result = await this.prisma.file.create({
             data: {
                 ownerId: user.id,
                 name: req.body.name,
                 mimeType: req.body.mimeType,
-                content: req.body.content
+                content: req.body.content,
+                fileSrc: 'https://storage.yandexcloud.net/rag-search/' + fileKey
             }
         });
 
@@ -111,7 +139,7 @@ export class TgBotService {
             }
         }
 
-        if (user.files.length > 10) {
+        if (user.files.length > 50) {
             return {
                 available: false,
                 notAvailabilityReason: 'За текущие сутки вы отправили слишком много файлов'

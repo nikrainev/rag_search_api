@@ -7,6 +7,7 @@ import { TgBotController } from './tgBot.controller';
 import { S3 } from 'providers/S3';
 import {JwtModule} from "@nestjs/jwt";
 import {PrismaService} from "../../providers/Prisma";
+import {TelegramAPI} from "../../providers/Telegram";
 
 @Module({
     controllers: [TgBotController],
@@ -14,7 +15,8 @@ import {PrismaService} from "../../providers/Prisma";
         TgBotService,
         S3,
         JwtModule,
-        PrismaService
+        PrismaService,
+        TelegramAPI
     ],
     exports: [],
 })
